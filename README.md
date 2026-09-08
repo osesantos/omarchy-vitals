@@ -25,7 +25,7 @@ number, a network speed readout, and a disk bar all at once.
 
 ## Screenshots
 
-Bar entries — CPU, memory, disk, and a network speed readout:
+Bar entries — CPU, sensors, memory, disk, and a network speed readout:
 
 ![Vitals in the bar](docs/bar.png)
 
@@ -38,6 +38,10 @@ Click any entry for its details panel:
 | Disk | Network |
 |---|---|
 | ![Disk panel](docs/panel-disk.png) | ![Network panel](docs/panel-network.png) |
+
+| Sensors | |
+|---|---|
+| ![Sensors panel](docs/panel-sensors.png) | |
 
 ## Install
 
