@@ -162,6 +162,7 @@ BarWidget {
       id: mouse
       anchors.fill: parent
       hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
       onClicked: root.toggle()
       onEntered: if (root.bar) root.bar.showTooltip(button, root.module.toUpperCase() + " · " + root.valueText)
       onExited: if (root.bar) root.bar.hideTooltip(button)

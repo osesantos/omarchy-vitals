@@ -89,4 +89,12 @@ Column {
       }
     }
   }
+
+  PanelSeparator { foreground: panel.fg }
+
+  Local.ProcessList {
+    width: parent.width
+    bar: panel.bar
+    sortKey: "cpu"
+  }
 }

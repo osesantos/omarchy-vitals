@@ -65,4 +65,12 @@ Column {
     foreground: panel.fg
     fontFamily: panel.ff
   }
+
+  PanelSeparator { foreground: panel.fg }
+
+  Local.ProcessList {
+    width: parent.width
+    bar: panel.bar
+    sortKey: "mem"
+  }
 }

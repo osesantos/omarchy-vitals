@@ -122,6 +122,18 @@ Singleton {
     onSampled: sampler.sensorsList = sensors
   }
 
+  // ---- Top processes (on demand) ------------------------------------------
+  // Polled by CPU/memory panels on open, never on the tick.
+  property alias processes: processSource
+  property var processList: []
+
+  function pollProcesses(sortKey) { processSource.poll(sortKey) }
+
+  Vitals.ProcessSource {
+    id: processSource
+    onSampled: sampler.processList = list
+  }
+
   // ---- The one timer ------------------------------------------------------
   Timer {
     id: tick
