@@ -47,10 +47,13 @@ BarWidget {
       case "memory": return Vitals.Sampler.memPercent
       case "network": return Vitals.Sampler.netPercent
       case "disk": return Vitals.Sampler.diskPercent
+      case "sensors": return Vitals.Sampler.maxTemp
       case "cpu":
       default: return Vitals.Sampler.cpuPercent
     }
   }
+  // Bar label text. Percentages for most; a temperature for sensors.
+  readonly property string valueText: module === "sensors" ? (value + "°") : (value + "%")
   readonly property var history: {
     switch (module) {
       case "memory": return Vitals.Sampler.memHistory
@@ -60,12 +63,25 @@ BarWidget {
       default: return Vitals.Sampler.cpuHistory
     }
   }
-  readonly property var series: module === "cpu" ? Vitals.Sampler.cpu.cores : []
+  // Per-item series for the `bars` chart: per-core for cpu, per-sensor temps
+  // for sensors.
+  readonly property var series: {
+    if (module === "cpu") return Vitals.Sampler.cpu.cores
+    if (module === "sensors") {
+      var out = []
+      var list = Vitals.Sampler.sensorsList
+      for (var i = 0; i < list.length; i++)
+        if (list[i].type === "temp") out.push(Math.min(100, list[i].value))
+      return out
+    }
+    return []
+  }
   readonly property string glyph: {
     switch (module) {
       case "memory": return "󰍛"
       case "network": return "󰤨"
       case "disk": return "󰋊"
+      case "sensors": return "󰔏"
       case "cpu":
       default: return "󰻠"
     }
@@ -136,16 +152,16 @@ BarWidget {
       anchors.fill: parent
       hoverEnabled: true
       onClicked: root.toggle()
-      onEntered: if (root.bar) root.bar.showTooltip(button, root.module.toUpperCase() + " · " + root.value + "%")
+      onEntered: if (root.bar) root.bar.showTooltip(button, root.module.toUpperCase() + " · " + root.valueText)
       onExited: if (root.bar) root.bar.hideTooltip(button)
     }
   }
 
-  Component { id: textChart;  Charts.Text  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: miniChart;  Charts.Mini  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: lineChart;  Charts.Line  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: barsChart;  Charts.Bars  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history; series: root.series } }
-  Component { id: pieChart;   Charts.Pie   { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: fillChart;  Charts.Fill  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history; upText: root.upText; downText: root.downText } }
+  Component { id: textChart;  Charts.Text  { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history } }
+  Component { id: miniChart;  Charts.Mini  { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history } }
+  Component { id: lineChart;  Charts.Line  { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history } }
+  Component { id: barsChart;  Charts.Bars  { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history; series: root.series } }
+  Component { id: pieChart;   Charts.Pie   { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history } }
+  Component { id: fillChart;  Charts.Fill  { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history } }
+  Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; valueText: root.valueText; history: root.history; upText: root.upText; downText: root.downText } }
 }

@@ -49,6 +49,7 @@ Panel {
             case "memory": return memoryPanel
             case "network": return networkPanel
             case "disk": return diskPanel
+            case "sensors": return sensorsPanel
             case "cpu":
             default: return cpuPanel
           }
@@ -75,5 +76,10 @@ Panel {
   Component {
     id: diskPanel
     Panels.DiskPanel { width: content.width; bar: root.bar }
+  }
+
+  Component {
+    id: sensorsPanel
+    Panels.SensorsPanel { width: content.width; bar: root.bar }
   }
 }

@@ -2,8 +2,8 @@ import QtQuick
 import qs.Commons
 
 // Up/down transfer rates, for network and disk. The widget supplies
-// `upText`/`downText` already formatted (e.g. "1.2 MB/s"); this chart only
-// lays them out with arrows.
+// `upText`/`downText` already formatted (e.g. "1.2 MB/s"); this chart lays them
+// out side by side with arrows and comfortable padding.
 Item {
   id: chart
 
@@ -19,24 +19,49 @@ Item {
   readonly property string ff: bar ? bar.fontFamily : "monospace"
 
   implicitHeight: bar ? bar.barSize : 26
-  implicitWidth: col.implicitWidth
+  implicitWidth: row.implicitWidth + 12
 
-  Column {
-    id: col
+  Row {
+    id: row
     anchors.centerIn: parent
-    spacing: 0
+    spacing: 8
 
-    Text {
-      text: "↑ " + chart.upText
-      color: chart.fg
-      font.family: chart.ff
-      font.pixelSize: 9
+    Row {
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: 2
+      Text {
+        text: "↓"
+        color: chart.fg
+        font.family: chart.ff
+        font.pixelSize: 11
+        anchors.verticalCenter: parent.verticalCenter
+      }
+      Text {
+        text: chart.downText
+        color: chart.fg
+        font.family: chart.ff
+        font.pixelSize: 11
+        anchors.verticalCenter: parent.verticalCenter
+      }
     }
-    Text {
-      text: "↓ " + chart.downText
-      color: chart.fg
-      font.family: chart.ff
-      font.pixelSize: 9
+
+    Row {
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: 2
+      Text {
+        text: "↑"
+        color: chart.fg
+        font.family: chart.ff
+        font.pixelSize: 11
+        anchors.verticalCenter: parent.verticalCenter
+      }
+      Text {
+        text: chart.upText
+        color: chart.fg
+        font.family: chart.ff
+        font.pixelSize: 11
+        anchors.verticalCenter: parent.verticalCenter
+      }
     }
   }
 }

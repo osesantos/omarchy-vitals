@@ -3,3 +3,4 @@ CpuPanel 1.0 CpuPanel.qml
 MemoryPanel 1.0 MemoryPanel.qml
 NetworkPanel 1.0 NetworkPanel.qml
 DiskPanel 1.0 DiskPanel.qml
+SensorsPanel 1.0 SensorsPanel.qml

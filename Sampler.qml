@@ -23,30 +23,34 @@ Singleton {
   // ---- Subscription refcounting -------------------------------------------
   property var _refs: ({})
 
+  // Reactive per-module subscription flags. Timer `running:` bindings depend on
+  // these — a plain subscribed() function call does not establish a QML
+  // dependency, so timers would never start (the disk/sensors 0-value bug).
+  readonly property bool cpuOn: (_refs["cpu"] || 0) > 0
+  readonly property bool memoryOn: (_refs["memory"] || 0) > 0
+  readonly property bool networkOn: (_refs["network"] || 0) > 0
+  readonly property bool diskOn: (_refs["disk"] || 0) > 0
+  readonly property bool sensorsOn: (_refs["sensors"] || 0) > 0
+
   function subscribe(module) {
     var m = String(module || "")
     if (m === "") return
-    _refs[m] = (_refs[m] || 0) + 1
-    _refs = _refs
-    tick.running = _anyActive()
+    var next = Object.assign({}, _refs)
+    next[m] = (next[m] || 0) + 1
+    _refs = next
   }
 
   function unsubscribe(module) {
     var m = String(module || "")
     if (m === "" || !_refs[m]) return
-    _refs[m] = _refs[m] - 1
-    if (_refs[m] <= 0) delete _refs[m]
-    _refs = _refs
-    tick.running = _anyActive()
+    var next = Object.assign({}, _refs)
+    next[m] = next[m] - 1
+    if (next[m] <= 0) delete next[m]
+    _refs = next
   }
 
   function subscribed(module) {
     return (_refs[String(module || "")] || 0) > 0
-  }
-
-  function _anyActive() {
-    for (var k in _refs) if (_refs[k] > 0) return true
-    return false
   }
 
   // Push a value onto a bounded ring buffer, returning a new array (assigning
@@ -99,18 +103,37 @@ Singleton {
       Math.min(100, Math.round(Math.max(readBytesPerSec, writeBytesPerSec) / ceilingBps * 100)))
   }
 
+  // ---- Sensors ------------------------------------------------------------
+  // Resolve the plugin directory so the enumeration helper ships with the
+  // plugin rather than depending on PATH.
+  readonly property string pluginDir: {
+    var u = String(Qt.resolvedUrl("."))
+    if (u.indexOf("file://") === 0) u = u.substring(7)
+    return u.charAt(u.length - 1) === "/" ? u : u + "/"
+  }
+
+  property alias sensors: sensorsSource
+  readonly property int maxTemp: sensorsSource.maxTemp
+  property var sensorsList: []
+
+  Vitals.SensorsSource {
+    id: sensorsSource
+    pluginDir: sampler.pluginDir
+    onSampled: sampler.sensorsList = sensors
+  }
+
   // ---- The one timer ------------------------------------------------------
   Timer {
     id: tick
     interval: 2000
     repeat: true
-    running: false
+    running: sampler.cpuOn || sampler.memoryOn || sampler.networkOn || sampler.diskOn
     triggeredOnStart: true
     onTriggered: {
-      if (sampler.subscribed("cpu")) cpuSource.poll()
-      if (sampler.subscribed("memory")) memorySource.poll()
-      if (sampler.subscribed("network")) networkSource.poll()
-      if (sampler.subscribed("disk")) diskSource.poll()
+      if (sampler.cpuOn) cpuSource.poll()
+      if (sampler.memoryOn) memorySource.poll()
+      if (sampler.networkOn) networkSource.poll()
+      if (sampler.diskOn) diskSource.poll()
     }
   }
 
@@ -119,8 +142,18 @@ Singleton {
   Timer {
     interval: 30000
     repeat: true
-    running: sampler.subscribed("disk")
+    running: sampler.diskOn
     triggeredOnStart: true
-    onTriggered: if (sampler.subscribed("disk")) diskSource.pollCapacity()
+    onTriggered: if (sampler.diskOn) diskSource.pollCapacity()
+  }
+
+  // Sensors on a slower 5s cadence — reading many hwmon files is comparatively
+  // expensive, and temperatures move slowly.
+  Timer {
+    interval: 5000
+    repeat: true
+    running: sampler.sensorsOn
+    triggeredOnStart: true
+    onTriggered: if (sampler.sensorsOn) sensorsSource.poll()
   }
 }

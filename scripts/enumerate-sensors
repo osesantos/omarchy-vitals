@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Enumerate hwmon temperature and fan sensors once, emitting one JSON object per
+# line (JSONL). QML has no glob, so this runs at startup; the SensorsSource
+# caches the resolved *_input paths and reads them via FileView thereafter.
+#
+# Each line: {"key","chip","label","type","path"}
+#   type: "temp" (millidegrees C) or "fan" (RPM)
+#   key:  stable id "chip/sensorN", used by the multiselect schema
+set -euo pipefail
+
+emit() { # chip label type path
+  local chip="$1" label="$2" type="$3" path="$4"
+  local sensor; sensor="$(basename "$path")"; sensor="${sensor%_input}"
+  local key="${chip}/${sensor}"
+  # JSON-escape backslash and double-quote in the free-text fields.
+  local esc_label="${label//\\/\\\\}"; esc_label="${esc_label//\"/\\\"}"
+  printf '{"key":"%s","chip":"%s","label":"%s","type":"%s","path":"%s"}\n' \
+    "$key" "$chip" "$esc_label" "$type" "$path"
+}
+
+for h in /sys/class/hwmon/hwmon*; do
+  [ -d "$h" ] || continue
+  chip="$(cat "$h/name" 2>/dev/null || echo "hwmon")"
+  for f in "$h"/temp*_input; do
+    [ -e "$f" ] || continue
+    base="${f%_input}"
+    label="$(cat "${base}_label" 2>/dev/null || true)"
+    [ -n "$label" ] || label="$chip"
+    emit "$chip" "$label" "temp" "$f"
+  done
+  for f in "$h"/fan*_input; do
+    [ -e "$f" ] || continue
+    base="${f%_input}"
+    label="$(cat "${base}_label" 2>/dev/null || true)"
+    [ -n "$label" ] || label="fan"
+    emit "$chip" "$label" "fan" "$f"
+  done
+done
