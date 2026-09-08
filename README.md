@@ -9,6 +9,22 @@ One install gives you as many bar entries as you like. Each entry picks a
 independently in `shell.json`, so a single plugin can drive a CPU pie, a memory
 number, a network speed readout, and a disk bar all at once.
 
+## Screenshots
+
+Bar entries — CPU, memory, disk, and a network speed readout:
+
+![Vitals in the bar](docs/bar.png)
+
+Click any entry for its details panel:
+
+| CPU | Memory |
+|---|---|
+| ![CPU panel](docs/panel-cpu.png) | ![Memory panel](docs/panel-memory.png) |
+
+| Disk | Network |
+|---|---|
+| ![Disk panel](docs/panel-disk.png) | ![Network panel](docs/panel-network.png) |
+
 ## Install
 
 ```sh
