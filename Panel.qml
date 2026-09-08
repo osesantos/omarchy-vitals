@@ -44,7 +44,15 @@ Panel {
       Loader {
         id: content
         width: parent.width
-        sourceComponent: root.module === "memory" ? memoryPanel : cpuPanel
+        sourceComponent: {
+          switch (root.module) {
+            case "memory": return memoryPanel
+            case "network": return networkPanel
+            case "disk": return diskPanel
+            case "cpu":
+            default: return cpuPanel
+          }
+        }
       }
     }
   }
@@ -57,5 +65,15 @@ Panel {
   Component {
     id: memoryPanel
     Panels.MemoryPanel { width: content.width; bar: root.bar }
+  }
+
+  Component {
+    id: networkPanel
+    Panels.NetworkPanel { width: content.width; bar: root.bar }
+  }
+
+  Component {
+    id: diskPanel
+    Panels.DiskPanel { width: content.width; bar: root.bar }
   }
 }

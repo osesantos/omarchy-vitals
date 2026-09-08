@@ -1,2 +1,4 @@
 CpuSource 1.0 CpuSource.qml
 MemorySource 1.0 MemorySource.qml
+NetworkSource 1.0 NetworkSource.qml
+DiskSource 1.0 DiskSource.qml

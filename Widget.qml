@@ -4,7 +4,7 @@ import qs.Ui
 import qs.Commons
 import "." as Vitals
 import "charts" as Charts
-
+import "format.js" as Fmt
 // A single Vitals bar entry — the manifest entry point. Reads its `module` and
 // `widget` from the inline shell.json settings, subscribes to the shared
 // singleton sampler, renders the chosen chart in the bar, and loads Panel.qml
@@ -45,6 +45,8 @@ BarWidget {
   readonly property int value: {
     switch (module) {
       case "memory": return Vitals.Sampler.memPercent
+      case "network": return Vitals.Sampler.netPercent
+      case "disk": return Vitals.Sampler.diskPercent
       case "cpu":
       default: return Vitals.Sampler.cpuPercent
     }
@@ -52,6 +54,8 @@ BarWidget {
   readonly property var history: {
     switch (module) {
       case "memory": return Vitals.Sampler.memHistory
+      case "network": return Vitals.Sampler.netHistory
+      case "disk": return Vitals.Sampler.diskHistory
       case "cpu":
       default: return Vitals.Sampler.cpuHistory
     }
@@ -60,8 +64,26 @@ BarWidget {
   readonly property string glyph: {
     switch (module) {
       case "memory": return "󰍛"
+      case "network": return "󰤨"
+      case "disk": return "󰋊"
       case "cpu":
       default: return "󰻠"
+    }
+  }
+
+  // Up/down rate strings for the speed chart (network + disk).
+  readonly property string upText: {
+    switch (module) {
+      case "network": return Fmt.rate(Vitals.Sampler.network.txBytesPerSec)
+      case "disk": return Fmt.rate(Vitals.Sampler.disk.writeBytesPerSec)
+      default: return "—"
+    }
+  }
+  readonly property string downText: {
+    switch (module) {
+      case "network": return Fmt.rate(Vitals.Sampler.network.rxBytesPerSec)
+      case "disk": return Fmt.rate(Vitals.Sampler.disk.readBytesPerSec)
+      default: return "—"
     }
   }
 
@@ -125,5 +147,5 @@ BarWidget {
   Component { id: barsChart;  Charts.Bars  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history; series: root.series } }
   Component { id: pieChart;   Charts.Pie   { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
   Component { id: fillChart;  Charts.Fill  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-  Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history; upText: root.upText; downText: root.downText } }
 }

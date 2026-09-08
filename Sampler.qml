@@ -78,6 +78,27 @@ Singleton {
     onSampled: sampler.memHistory = sampler._push(sampler.memHistory, percent)
   }
 
+  // ---- Network ------------------------------------------------------------
+  property alias network: networkSource
+  readonly property int netPercent: networkSource.percent
+  property var netHistory: []
+
+  Vitals.NetworkSource {
+    id: networkSource
+    onSampled: sampler.netHistory = sampler._push(sampler.netHistory, percent)
+  }
+
+  // ---- Disk ---------------------------------------------------------------
+  property alias disk: diskSource
+  readonly property int diskPercent: diskSource.percent
+  property var diskHistory: []
+
+  Vitals.DiskSource {
+    id: diskSource
+    onSampled: sampler.diskHistory = sampler._push(sampler.diskHistory,
+      Math.min(100, Math.round(Math.max(readBytesPerSec, writeBytesPerSec) / ceilingBps * 100)))
+  }
+
   // ---- The one timer ------------------------------------------------------
   Timer {
     id: tick
@@ -88,6 +109,18 @@ Singleton {
     onTriggered: {
       if (sampler.subscribed("cpu")) cpuSource.poll()
       if (sampler.subscribed("memory")) memorySource.poll()
+      if (sampler.subscribed("network")) networkSource.poll()
+      if (sampler.subscribed("disk")) diskSource.poll()
     }
+  }
+
+  // Disk capacity (df) on a slow cadence, off the main tick — QML has no
+  // statvfs and df barely changes.
+  Timer {
+    interval: 30000
+    repeat: true
+    running: sampler.subscribed("disk")
+    triggeredOnStart: true
+    onTriggered: if (sampler.subscribed("disk")) diskSource.pollCapacity()
   }
 }
