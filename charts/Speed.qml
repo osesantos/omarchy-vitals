@@ -33,14 +33,14 @@ Item {
         text: "↓"
         color: chart.fg
         font.family: chart.ff
-        font.pixelSize: 11
+        font.pixelSize: Style.bar.iconFont
         anchors.verticalCenter: parent.verticalCenter
       }
       Text {
         text: chart.downText
         color: chart.fg
         font.family: chart.ff
-        font.pixelSize: 11
+        font.pixelSize: Style.bar.iconFont
         anchors.verticalCenter: parent.verticalCenter
       }
     }
@@ -52,14 +52,14 @@ Item {
         text: "↑"
         color: chart.fg
         font.family: chart.ff
-        font.pixelSize: 11
+        font.pixelSize: Style.bar.iconFont
         anchors.verticalCenter: parent.verticalCenter
       }
       Text {
         text: chart.upText
         color: chart.fg
         font.family: chart.ff
-        font.pixelSize: 11
+        font.pixelSize: Style.bar.iconFont
         anchors.verticalCenter: parent.verticalCenter
       }
     }

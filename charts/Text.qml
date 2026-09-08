@@ -24,6 +24,6 @@ Item {
     text: (chart.glyph ? chart.glyph + " " : "") + chart.valueText
     color: chart.fg
     font.family: chart.ff
-    font.pixelSize: 12
+    font.pixelSize: Style.bar.iconFont
   }
 }

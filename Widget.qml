@@ -106,8 +106,23 @@ BarWidget {
   implicitWidth: Math.max(24, chartLoader.implicitWidth + 12)
   implicitHeight: bar ? bar.barSize : 26
 
-  Component.onCompleted: Vitals.Sampler.subscribe(root.module)
-  Component.onDestruction: Vitals.Sampler.unsubscribe(root.module)
+  // Subscribe to the sampler for the resolved module. The bar injects
+  // `settings` *after* Component.onCompleted, so subscribing there would always
+  // see the default "cpu". Track `module` instead: onModuleChanged fires when
+  // settings arrive, and we move the subscription from the old module to the
+  // new one. `_subscribed` guards the initial undefined->value transition.
+  property string _subscribed: ""
+
+  function _resubscribe() {
+    if (_subscribed === module) return
+    if (_subscribed !== "") Vitals.Sampler.unsubscribe(_subscribed)
+    Vitals.Sampler.subscribe(module)
+    _subscribed = module
+  }
+
+  onModuleChanged: { _resubscribe(); injectPanel() }
+  Component.onCompleted: _resubscribe()
+  Component.onDestruction: if (_subscribed !== "") Vitals.Sampler.unsubscribe(_subscribed)
 
   function chartComponent(w) {
     switch (w) {
@@ -133,13 +148,9 @@ BarWidget {
     }
   }
 
-  Rectangle {
+  Item {
     id: button
     anchors.fill: parent
-    color: mouse.containsMouse
-      ? Qt.rgba((root.bar ? root.bar.foreground.r : 1), (root.bar ? root.bar.foreground.g : 1), (root.bar ? root.bar.foreground.b : 1), 0.08)
-      : "transparent"
-    radius: Style.cornerRadius
 
     Loader {
       id: chartLoader
