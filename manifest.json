@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "osesantos.vitals",
   "name": "Omarchy Vitals",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "osesantos",
   "license": "MIT",
   "description": "System monitor for the Omarchy bar — CPU, memory, disk, network, and sensors, modelled on exelban/stats",
