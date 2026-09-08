@@ -20,13 +20,25 @@ Item {
   readonly property color fg: bar ? bar.foreground : Color.foreground
   readonly property string ff: bar ? bar.fontFamily : "monospace"
 
-  // Fixed field width so "0 B/s" and "1.2 MB/s" occupy the same space.
-  readonly property int fieldWidth: 58
+  // Fixed field width so the widget never resizes as the rate text changes.
+  // Sized to the widest realistic value via a hidden metric below, so there is
+  // no dead space to the right when the number is short.
+  readonly property int fieldWidth: metric.implicitWidth
 
   implicitHeight: bar ? bar.barSize : 26
-  implicitWidth: fieldWidth + 12
+  implicitWidth: stack.implicitWidth
+
+  // Off-screen sample of the widest rate string, to lock the field width.
+  Text {
+    id: metric
+    visible: false
+    text: "999 MB/s"
+    font.family: chart.ff
+    font.pixelSize: Style.font.caption
+  }
 
   Column {
+    id: stack
     anchors.centerIn: parent
     spacing: 0
     topPadding: 3
@@ -36,7 +48,7 @@ Item {
       property string arrow: ""
       property string value: ""
       spacing: 3
-      height: Style.font.caption - 1.5   // tighter than the natural line box
+      height: Style.font.caption - 1   // tighter than the natural line box
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: parent.arrow
@@ -48,7 +60,7 @@ Item {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         width: chart.fieldWidth
-        horizontalAlignment: Text.AlignRight
+        horizontalAlignment: Text.AlignLeft
         text: parent.value
         elide: Text.ElideRight
         color: chart.fg
