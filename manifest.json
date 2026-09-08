@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "osesantos.vitals",
+  "name": "Omarchy Vitals",
+  "version": "0.1.0",
+  "author": "osesantos",
+  "license": "MIT",
+  "description": "System monitor for the Omarchy bar — CPU, memory, disk, network, and sensors, modelled on exelban/stats",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Widget.qml"
+  },
+  "barWidget": {
+    "displayName": "Vitals",
+    "description": "One bar entry per metric. Pick a module (cpu, memory, disk, network, sensors) and a widget style.",
+    "category": "System",
+    "aliases": [
+      "cpu",
+      "memory",
+      "ram",
+      "disk",
+      "network",
+      "net",
+      "sensors",
+      "temp",
+      "monitor",
+      "stats",
+      "vitals"
+    ],
+    "allowMultiple": true,
+    "defaultSection": "right",
+    "defaults": {
+      "module": "cpu",
+      "widget": "text"
+    }
+  }
+}
