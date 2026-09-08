@@ -38,19 +38,19 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       width: 34
       height: (chart.bar ? chart.bar.barSize : 26) - 10
-      property var data: chart.history
-      onDataChanged: requestPaint()
+      property var pts: chart.history
+      onPtsChanged: requestPaint()
       onPaint: {
         var ctx = getContext("2d")
         ctx.reset()
-        var n = data ? data.length : 0
+        var n = pts ? pts.length : 0
         if (n < 2) return
         var w = width, h = height
         var step = w / (n - 1)
         ctx.beginPath()
         ctx.moveTo(0, h)
         for (var i = 0; i < n; i++) {
-          var v = Math.max(0, Math.min(100, data[i]))
+          var v = Math.max(0, Math.min(100, pts[i]))
           ctx.lineTo(i * step, h - (v / 100) * h)
         }
         ctx.lineTo(w, h)
@@ -59,7 +59,7 @@ Item {
         ctx.fill()
         ctx.beginPath()
         for (var j = 0; j < n; j++) {
-          var vv = Math.max(0, Math.min(100, data[j]))
+          var vv = Math.max(0, Math.min(100, pts[j]))
           var y = h - (vv / 100) * h
           if (j === 0) ctx.moveTo(0, y); else ctx.lineTo(j * step, y)
         }

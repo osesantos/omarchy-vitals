@@ -2,6 +2,7 @@ import QtQuick
 import qs.Ui
 import qs.Commons
 import ".." as Vitals
+import "." as Local
 
 // CPU detail panel content. A Column of meters + per-core bars, reading live
 // values off the shared singleton sampler.
@@ -21,7 +22,7 @@ Column {
     fontSize: Style.font.title
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "USAGE"
     fraction: Vitals.Sampler.cpuPercent / 100
@@ -30,7 +31,7 @@ Column {
     fontFamily: panel.ff
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "FREQUENCY"
     fraction: 0
@@ -40,7 +41,7 @@ Column {
     fontFamily: panel.ff
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "LOAD AVG"
     fraction: 0

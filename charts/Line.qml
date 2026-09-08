@@ -23,18 +23,18 @@ Item {
     id: line
     anchors.fill: parent
     anchors.margins: 4
-    property var data: chart.history
-    onDataChanged: requestPaint()
+    property var pts: chart.history
+    onPtsChanged: requestPaint()
     onPaint: {
       var ctx = getContext("2d")
       ctx.reset()
-      var n = data ? data.length : 0
+      var n = pts ? pts.length : 0
       if (n < 2) return
       var w = width, h = height
       var step = w / (n - 1)
       ctx.beginPath()
       for (var i = 0; i < n; i++) {
-        var v = Math.max(0, Math.min(100, data[i]))
+        var v = Math.max(0, Math.min(100, pts[i]))
         var y = h - (v / 100) * h
         if (i === 0) ctx.moveTo(0, y); else ctx.lineTo(i * step, y)
       }

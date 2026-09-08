@@ -1,24 +1,47 @@
 import QtQuick
+import Quickshell
 import qs.Ui
 import qs.Commons
 import "." as Vitals
-import "panels" as Panels
 import "charts" as Charts
 
-// A single Vitals bar entry. Reads its `module` and `widget` from the inline
-// shell.json settings, subscribes to the shared singleton sampler for that
-// module, renders the chosen widget style in the bar, and opens a per-module
-// detail panel on click.
-Panel {
+// A single Vitals bar entry — the manifest entry point. Reads its `module` and
+// `widget` from the inline shell.json settings, subscribes to the shared
+// singleton sampler, renders the chosen chart in the bar, and loads Panel.qml
+// for the details popup.
+//
+// This follows the blessed BarWidget + separate Panel.qml split from
+// plugins.omarchy.org/develop.html: the entry point forwards the panel
+// lifecycle (opened/open/close/toggle) so the shell's summon/hide IPC routes
+// correctly, not just click-to-toggle.
+BarWidget {
   id: root
 
   moduleName: "osesantos.vitals"
-  ipcTarget: ""   // allowMultiple: sharing one IPC target across instances warns
 
   readonly property string module: setting("module", "cpu")
   readonly property string widget: setting("widget", "text")
 
-  // Live value + label per module. Chart kit (P2) reads `value`/`history`.
+  // ---- Panel lifecycle forwarding -----------------------------------------
+  readonly property bool opened: panelLoader.item ? panelLoader.item.opened === true : false
+  readonly property bool popoutSwitchClosing: panelLoader.item ? panelLoader.item.popoutSwitchClosing === true : false
+
+  function open() { if (panelLoader.item) panelLoader.item.open() }
+  function close() { if (panelLoader.item) panelLoader.item.close() }
+  function toggle() { if (panelLoader.item) panelLoader.item.toggle() }
+  function closeForPopoutSwitch() { if (panelLoader.item) panelLoader.item.closeForPopoutSwitch() }
+
+  function injectPanel() {
+    if (!panelLoader.item) return
+    panelLoader.item.bar = root.bar
+    panelLoader.item.anchorItem = button
+    panelLoader.item.hostWidget = root
+    panelLoader.item.module = root.module
+  }
+
+  onBarChanged: injectPanel()
+
+  // ---- Live values --------------------------------------------------------
   readonly property int value: {
     switch (module) {
       case "memory": return Vitals.Sampler.memPercent
@@ -33,6 +56,7 @@ Panel {
       default: return Vitals.Sampler.cpuHistory
     }
   }
+  readonly property var series: module === "cpu" ? Vitals.Sampler.cpu.cores : []
   readonly property string glyph: {
     switch (module) {
       case "memory": return "󰍛"
@@ -41,16 +65,12 @@ Panel {
     }
   }
 
-  // Per-core series for the `bars` chart (cpu only).
-  readonly property var series: module === "cpu" ? Vitals.Sampler.cpu.cores : []
-
   implicitWidth: Math.max(24, chartLoader.implicitWidth + 12)
   implicitHeight: bar ? bar.barSize : 26
 
   Component.onCompleted: Vitals.Sampler.subscribe(root.module)
   Component.onDestruction: Vitals.Sampler.unsubscribe(root.module)
 
-  // Map the `widget` setting to a chart type. Unknown values fall back to text.
   function chartComponent(w) {
     switch (w) {
       case "mini":  return miniChart
@@ -61,6 +81,17 @@ Panel {
       case "speed": return speedChart
       case "text":
       default:      return textChart
+    }
+  }
+
+  Loader {
+    id: panelLoader
+    active: true
+    source: Qt.resolvedUrl("Panel.qml")
+    visible: false
+    onLoaded: {
+      root.injectPanel()
+      Qt.callLater(root.injectPanel)
     }
   }
 
@@ -95,39 +126,4 @@ Panel {
   Component { id: pieChart;   Charts.Pie   { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
   Component { id: fillChart;  Charts.Fill  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
   Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
-
-
-  KeyboardPanel {
-    id: panel
-    anchorItem: button
-    owner: root
-    bar: root.bar
-    open: root.opened
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(360))
-    contentHeight: panel.fittedContentHeight(content.implicitHeight, Style.space(720))
-
-    PanelKeyCatcher {
-      id: keyCatcher
-      anchors.fill: parent
-      onCloseRequested: root.close()
-      onTabRequested: function(direction) { root.switchPanel(direction) }
-
-      Loader {
-        id: content
-        width: parent.width
-        sourceComponent: root.module === "memory" ? memoryPanel : cpuPanel
-      }
-    }
-  }
-
-  Component {
-    id: cpuPanel
-    Panels.CpuPanel { width: content.width; bar: root.bar }
-  }
-
-  Component {
-    id: memoryPanel
-    Panels.MemoryPanel { width: content.width; bar: root.bar }
-  }
 }

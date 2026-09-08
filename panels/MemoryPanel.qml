@@ -2,6 +2,7 @@ import QtQuick
 import qs.Ui
 import qs.Commons
 import ".." as Vitals
+import "." as Local
 
 // Memory detail panel content.
 Column {
@@ -22,7 +23,7 @@ Column {
     fontSize: Style.font.title
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "USED"
     fraction: Vitals.Sampler.memPercent / 100
@@ -32,7 +33,7 @@ Column {
     fontFamily: panel.ff
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "CACHED"
     fraction: Vitals.Sampler.memory.totalKb > 0
@@ -42,7 +43,7 @@ Column {
     fontFamily: panel.ff
   }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     visible: Vitals.Sampler.memory.swapTotalKb > 0
     label: "SWAP"
@@ -56,7 +57,7 @@ Column {
 
   PanelSeparator { foreground: panel.fg }
 
-  Vitals.MeterRow {
+  Local.MeterRow {
     width: parent.width
     label: "PRESSURE (avg10)"
     fraction: Math.min(1, Vitals.Sampler.memory.pressure / 100)

@@ -17,10 +17,10 @@ Item {
   readonly property color fg: bar ? bar.foreground : Color.foreground
   readonly property color accent: Color.accent
 
-  readonly property var data: (series && series.length > 0) ? series : [value]
+  readonly property var series2: (series && series.length > 0) ? series : [value]
 
   implicitHeight: bar ? bar.barSize : 26
-  implicitWidth: Math.max(12, data.length * 4)
+  implicitWidth: Math.max(12, series2.length * 4)
 
   Row {
     anchors.centerIn: parent
@@ -28,7 +28,7 @@ Item {
     spacing: 1
 
     Repeater {
-      model: chart.data
+      model: chart.series2
 
       Rectangle {
         width: 3
