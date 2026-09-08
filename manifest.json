@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "osesantos",
   "license": "MIT",
-  "description": "Modular system monitor for the Omarchy bar, à la exelban/stats: one independent entry per metric (CPU, memory, disk, network, sensors), each with its own widget style — text, sparkline, line, bars, pie, fill, or up/down speed — and a click-open detail panel with per-core graphs and top processes.",
+  "description": "Modular system monitor for the Omarchy bar: one independent entry per metric (CPU, memory, disk, network, sensors), each with its own widget style — text, sparkline, line, bars, pie, fill, or up/down speed — and a click-open detail panel with per-core graphs and top processes.",
   "kinds": [
     "bar-widget"
   ],

@@ -1,8 +1,7 @@
 # Omarchy Vitals
 
 A system monitor for the [Omarchy](https://omarchy.org/) shell bar — CPU,
-memory, disk, network, and sensors — modelled on
-[exelban/stats](https://github.com/exelban/stats) for macOS.
+memory, disk, network, and sensors.
 
 One install gives you as many bar entries as you like. Each entry picks a
 **module** (what it measures) and a **widget style** (how it's drawn), stored
@@ -23,10 +22,6 @@ number, a network speed readout, and a disk bar all at once.
 - **Pure QML.** A single `pragma Singleton` sampler over `FileView` with
   refcounted subscriptions — no background bash sampler scripts, and files are
   only read for modules actually on the bar.
-
-GPU and network latency are intentionally out of scope (the
-`nenadjokic.nvidia-hybrid` plugin covers NVIDIA well); Vitals focuses on a
-modular, panel-rich Stats-style monitor.
 
 ## Screenshots
 

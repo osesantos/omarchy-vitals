@@ -4,8 +4,8 @@ import Quickshell.Io
 // Sensor telemetry from /sys/class/hwmon. Because QML has no glob, the plugin's
 // enumerate-sensors script walks hwmon once at startup and emits JSONL; this
 // source caches the resolved *_input paths and reads them via FileView on the
-// (slower, 5s) sensor cadence — Mac Stats attributes up to 50% of its CPU to
-// Sensors, hence the separate interval.
+// (slower, 5s) sensor cadence — enumerating and reading many hwmon files is
+// comparatively expensive, and temperatures move slowly.
 //
 //   sensors  [ {key,chip,label,type,path,value} ]  value in °C (temp) or RPM (fan)
 //   maxTemp  int    hottest temperature, for the bar glyph default
@@ -60,10 +60,31 @@ Item {
     }
   }
 
+  // Apply one sensor reading, called by the reader delegates below. Keeping the
+  // mutation here means the delegates never touch `source`'s id directly (which
+  // is not reliably in scope from a Repeater delegate's component).
+  function applyReading(index, type, raw) {
+    if (!isFinite(raw)) return
+    var v = _rescale(type, raw)
+    var next = sensors.slice()
+    if (!next[index]) return
+    next[index] = Object.assign({}, next[index], { value: v })
+    sensors = next
+    var hot = 0
+    for (var i = 0; i < next.length; i++)
+      if (next[i].type === "temp" && next[i].value > hot) hot = next[i].value
+    maxTemp = hot
+    sampled()
+  }
+
   // One FileView per resolved path, rebuilt when the sensor list changes.
   Repeater {
     id: reader
     model: source.sensors
+
+    // A root handle the delegates can bind to without reaching for an id from
+    // an outer component scope.
+    property var owner: source
 
     function reloadAll() {
       for (var i = 0; i < count; i++) {
@@ -84,20 +105,7 @@ Item {
         printErrors: false
         onLoaded: {
           var raw = parseFloat(String(text() || "").trim())
-          if (!isFinite(raw)) return
-          var v = source._rescale(modelData.type, raw)
-          // Mutate a copy of the array so bindings on `sensors` re-evaluate.
-          var next = source.sensors.slice()
-          if (next[index]) {
-            next[index] = Object.assign({}, next[index], { value: v })
-            source.sensors = next
-          }
-          // Recompute hottest temperature.
-          var hot = 0
-          for (var i = 0; i < next.length; i++)
-            if (next[i].type === "temp" && next[i].value > hot) hot = next[i].value
-          source.maxTemp = hot
-          source.sampled()
+          reader.owner.applyReading(index, modelData.type, raw)
         }
       }
     }

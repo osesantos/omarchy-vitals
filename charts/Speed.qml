@@ -2,10 +2,9 @@ import QtQuick
 import qs.Commons
 
 // Up/down transfer rates, for network and disk. The widget supplies
-// `upText`/`downText` already formatted (e.g. "1.2 MB/s"). Stacked vertically
-// like exelban/stats — download over upload — with breathing room above and
-// below. Each rate sits in a fixed-width right-aligned field so the bar entry
-// never resizes as the numbers change.
+// `upText`/`downText` already formatted (e.g. "1.2 MB/s"). Stacked vertically —
+// download over upload — with breathing room above and below. Each rate sits in
+// a fixed-width field so the bar entry never resizes as the numbers change.
 Item {
   id: chart
 

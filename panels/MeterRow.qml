@@ -4,7 +4,7 @@ import qs.Commons
 
 // A labelled horizontal meter: LABEL on the left, value on the right, and a
 // proportional fill bar beneath. Shared by every Vitals panel so the modules
-// read consistently. Modelled on the nvidia-hybrid MeterRow.
+// read consistently.
 Column {
   id: meterRow
 
