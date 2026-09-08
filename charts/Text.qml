@@ -14,6 +14,7 @@ Item {
 
   readonly property color fg: bar ? bar.foreground : Color.foreground
   readonly property string ff: bar ? bar.fontFamily : "monospace"
+  readonly property bool vertical: bar ? bar.vertical : false
 
   implicitWidth: label.implicitWidth
   implicitHeight: label.implicitHeight
@@ -21,7 +22,10 @@ Item {
   Text {
     id: label
     anchors.centerIn: parent
-    text: (chart.glyph ? chart.glyph + " " : "") + chart.valueText
+    // Vertical bars are narrow (28px) — drop the number and show just the icon.
+    text: chart.vertical
+      ? chart.glyph
+      : (chart.glyph ? chart.glyph + " " : "") + chart.valueText
     color: chart.fg
     font.family: chart.ff
     font.pixelSize: Style.bar.iconFont

@@ -148,24 +148,26 @@ BarWidget {
     }
   }
 
-  Item {
+  // Use the shell's WidgetButton for the bar slot: it registers a click target
+  // with the bar (bar.registerClickTarget), which is what coordinates the
+  // pointing-hand cursor and click routing with the bar's drag-to-reorder
+  // gesture layer. A raw MouseArea is not registered, so the gesture layer
+  // sits on top and the cursor only changes on press. The label is hidden and
+  // our chart is overlaid on top.
+  WidgetButton {
     id: button
     anchors.fill: parent
+    bar: root.bar
+    text: " "                       // keeps hasVisualContent true so it stays interactive
+    labelVisible: false
+    fixedWidth: chartLoader.implicitWidth + 12
+    tooltipText: root.module.toUpperCase() + " · " + root.valueText
+    onPressed: function(b) { root.toggle() }
 
     Loader {
       id: chartLoader
       anchors.centerIn: parent
       sourceComponent: root.chartComponent(root.widget)
-    }
-
-    MouseArea {
-      id: mouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: root.toggle()
-      onEntered: if (root.bar) root.bar.showTooltip(button, root.module.toUpperCase() + " · " + root.valueText)
-      onExited: if (root.bar) root.bar.hideTooltip(button)
     }
   }
 
