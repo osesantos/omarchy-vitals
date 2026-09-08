@@ -9,6 +9,25 @@ One install gives you as many bar entries as you like. Each entry picks a
 independently in `shell.json`, so a single plugin can drive a CPU pie, a memory
 number, a network speed readout, and a disk bar all at once.
 
+### What makes it distinct
+
+- **Modular, not a fixed strip.** Every metric is its own `allowMultiple` bar
+  entry — reorder, duplicate, and style each independently — rather than one
+  combined widget.
+- **Seven widget styles** per metric: `text`, `mini`, `line`, `bars`, `pie`,
+  `fill`, `speed`.
+- **Click-open detail panels** with meters, a per-core CPU grid, and a live
+  top-processes list — not just a hover tooltip.
+- **Disk and hardware sensors** (hwmon temperatures and fan speeds) alongside
+  the usual CPU / memory / network.
+- **Pure QML.** A single `pragma Singleton` sampler over `FileView` with
+  refcounted subscriptions — no background bash sampler scripts, and files are
+  only read for modules actually on the bar.
+
+GPU and network latency are intentionally out of scope (the
+`nenadjokic.nvidia-hybrid` plugin covers NVIDIA well); Vitals focuses on a
+modular, panel-rich Stats-style monitor.
+
 ## Screenshots
 
 Bar entries — CPU, memory, disk, and a network speed readout:
