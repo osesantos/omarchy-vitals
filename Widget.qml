@@ -3,6 +3,7 @@ import qs.Ui
 import qs.Commons
 import "." as Vitals
 import "panels" as Panels
+import "charts" as Charts
 
 // A single Vitals bar entry. Reads its `module` and `widget` from the inline
 // shell.json settings, subscribes to the shared singleton sampler for that
@@ -40,21 +41,61 @@ Panel {
     }
   }
 
-  implicitWidth: button.implicitWidth
-  implicitHeight: button.implicitHeight
+  // Per-core series for the `bars` chart (cpu only).
+  readonly property var series: module === "cpu" ? Vitals.Sampler.cpu.cores : []
+
+  implicitWidth: Math.max(24, chartLoader.implicitWidth + 12)
+  implicitHeight: bar ? bar.barSize : 26
 
   Component.onCompleted: Vitals.Sampler.subscribe(root.module)
   Component.onDestruction: Vitals.Sampler.unsubscribe(root.module)
 
-  BarIconButton {
+  // Map the `widget` setting to a chart type. Unknown values fall back to text.
+  function chartComponent(w) {
+    switch (w) {
+      case "mini":  return miniChart
+      case "line":  return lineChart
+      case "bars":  return barsChart
+      case "pie":   return pieChart
+      case "fill":  return fillChart
+      case "speed": return speedChart
+      case "text":
+      default:      return textChart
+    }
+  }
+
+  Rectangle {
     id: button
     anchors.fill: parent
-    bar: root.bar
-    text: root.glyph + " " + root.value + "%"
-    slotSize: Style.bar.iconSlot * 2
-    tooltipText: root.module.toUpperCase() + " · " + root.value + "%"
-    onPressed: function(b) { root.toggle() }
+    color: mouse.containsMouse
+      ? Qt.rgba((root.bar ? root.bar.foreground.r : 1), (root.bar ? root.bar.foreground.g : 1), (root.bar ? root.bar.foreground.b : 1), 0.08)
+      : "transparent"
+    radius: Style.cornerRadius
+
+    Loader {
+      id: chartLoader
+      anchors.centerIn: parent
+      sourceComponent: root.chartComponent(root.widget)
+    }
+
+    MouseArea {
+      id: mouse
+      anchors.fill: parent
+      hoverEnabled: true
+      onClicked: root.toggle()
+      onEntered: if (root.bar) root.bar.showTooltip(button, root.module.toUpperCase() + " · " + root.value + "%")
+      onExited: if (root.bar) root.bar.hideTooltip(button)
+    }
   }
+
+  Component { id: textChart;  Charts.Text  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: miniChart;  Charts.Mini  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: lineChart;  Charts.Line  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: barsChart;  Charts.Bars  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history; series: root.series } }
+  Component { id: pieChart;   Charts.Pie   { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: fillChart;  Charts.Fill  { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+  Component { id: speedChart; Charts.Speed { bar: root.bar; glyph: root.glyph; value: root.value; history: root.history } }
+
 
   KeyboardPanel {
     id: panel

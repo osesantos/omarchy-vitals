@@ -34,6 +34,11 @@
     "defaults": {
       "module": "cpu",
       "widget": "text"
-    }
+    },
+    "schema": [
+      { "key": "module", "type": "enum", "label": "Module", "options": ["cpu", "memory", "disk", "network", "sensors"], "defaultValue": "cpu", "description": "Which system metric this bar entry monitors." },
+      { "key": "widget", "type": "enum", "label": "Widget style", "options": ["text", "mini", "line", "bars", "pie", "fill", "speed"], "defaultValue": "text", "description": "How the metric is drawn in the bar. Not every style suits every module." },
+      { "key": "intervalMs", "type": "integer", "label": "Poll interval (ms)", "min": 500, "max": 30000, "step": 500, "defaultValue": 2000, "description": "How often this module is sampled." }
+    ]
   }
 }
