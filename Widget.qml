@@ -1,46 +1,92 @@
 import QtQuick
+import qs.Ui
+import qs.Commons
 import "." as Vitals
+import "panels" as Panels
 
 // A single Vitals bar entry. Reads its `module` and `widget` from the inline
 // shell.json settings, subscribes to the shared singleton sampler for that
-// module, and renders the chosen widget style.
-//
-// P0: module "cpu", widget "text" only. Later phases add sources and charts
-// without changing this contract — the widget always subscribes by module and
-// reads live values off the singleton.
-Item {
+// module, renders the chosen widget style in the bar, and opens a per-module
+// detail panel on click.
+Panel {
   id: root
 
-  // Injected by the bar at load time (see bar/README.md "Bar properties").
-  property var bar: null
-  property string moduleName: ""
-  property var settings: ({})
-
-  // Read a single value from this entry's inline shell.json settings.
-  function setting(name, fallback) {
-    var v = settings ? settings[name] : undefined
-    return v === undefined || v === null ? fallback : v
-  }
+  moduleName: "osesantos.vitals"
+  ipcTarget: ""   // allowMultiple: sharing one IPC target across instances warns
 
   readonly property string module: setting("module", "cpu")
   readonly property string widget: setting("widget", "text")
 
-  implicitWidth: label.implicitWidth + 12
-  implicitHeight: bar ? bar.barSize : 26
+  // Live value + label per module. Chart kit (P2) reads `value`/`history`.
+  readonly property int value: {
+    switch (module) {
+      case "memory": return Vitals.Sampler.memPercent
+      case "cpu":
+      default: return Vitals.Sampler.cpuPercent
+    }
+  }
+  readonly property var history: {
+    switch (module) {
+      case "memory": return Vitals.Sampler.memHistory
+      case "cpu":
+      default: return Vitals.Sampler.cpuHistory
+    }
+  }
+  readonly property string glyph: {
+    switch (module) {
+      case "memory": return "󰍛"
+      case "cpu":
+      default: return "󰻠"
+    }
+  }
 
-  // Subscribe/unsubscribe over the widget's lifetime so the sampler only reads
-  // files for modules that are actually on the bar.
+  implicitWidth: button.implicitWidth
+  implicitHeight: button.implicitHeight
+
   Component.onCompleted: Vitals.Sampler.subscribe(root.module)
   Component.onDestruction: Vitals.Sampler.unsubscribe(root.module)
 
-  readonly property int cpuValue: Vitals.Sampler.cpuPercent
+  BarIconButton {
+    id: button
+    anchors.fill: parent
+    bar: root.bar
+    text: root.glyph + " " + root.value + "%"
+    slotSize: Style.bar.iconSlot * 2
+    tooltipText: root.module.toUpperCase() + " · " + root.value + "%"
+    onPressed: function(b) { root.toggle() }
+  }
 
-  Text {
-    id: label
-    anchors.centerIn: parent
-    text: root.module === "cpu" ? ("󰻠 " + root.cpuValue + "%") : root.module
-    color: root.bar ? root.bar.foreground : "white"
-    font.family: root.bar ? root.bar.fontFamily : "monospace"
-    font.pixelSize: 12
+  KeyboardPanel {
+    id: panel
+    anchorItem: button
+    owner: root
+    bar: root.bar
+    open: root.opened
+    focusTarget: keyCatcher
+    contentWidth: panel.fittedContentWidth(Style.space(360))
+    contentHeight: panel.fittedContentHeight(content.implicitHeight, Style.space(720))
+
+    PanelKeyCatcher {
+      id: keyCatcher
+      anchors.fill: parent
+      onCloseRequested: root.close()
+      onTabRequested: function(direction) { root.switchPanel(direction) }
+
+      Loader {
+        id: content
+        width: parent.width
+        sourceComponent: root.module === "memory" ? memoryPanel : cpuPanel
+      }
+    }
+  }
+
+  Component {
+    id: cpuPanel
+    Panels.CpuPanel { width: content.width; bar: root.bar }
+  }
+
+  Component {
+    id: memoryPanel
+    Panels.MemoryPanel { width: content.width; bar: root.bar }
   }
 }

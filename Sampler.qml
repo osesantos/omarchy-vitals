@@ -3,32 +3,31 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "sources" as Vitals
 
 // The single sampler shared by every Vitals widget in the bar.
 //
 // Facade-independent by design: rather than asking the host for a shared
-// `service` object (whose third-party availability is uncertain — see the
-// plan's facade risk), Vitals ships its own `pragma Singleton`. Quickshell
-// instantiates exactly one of these per process, so N bar entries share one
-// timer and one set of readings no matter how they were placed.
+// `service` object (whose third-party availability is uncertain), Vitals ships
+// its own `pragma Singleton`. Quickshell instantiates exactly one per process,
+// so N bar entries share one timer and one set of readings.
 //
 // Widgets never read /proc themselves. They subscribe to the modules they
 // render; the sampler refcounts subscriptions and only reads a file when at
-// least one widget wants that module. A bar with only a CPU widget never
-// touches /proc/meminfo.
+// least one widget wants that module.
 Singleton {
   id: sampler
 
+  readonly property int historyLength: 60
+
   // ---- Subscription refcounting -------------------------------------------
-  // moduleName -> number of live widgets subscribed. A module is sampled iff
-  // its count is > 0.
   property var _refs: ({})
 
   function subscribe(module) {
     var m = String(module || "")
     if (m === "") return
     _refs[m] = (_refs[m] || 0) + 1
-    _refs = _refs // nudge bindings
+    _refs = _refs
     tick.running = _anyActive()
   }
 
@@ -50,45 +49,33 @@ Singleton {
     return false
   }
 
+  // Push a value onto a bounded ring buffer, returning a new array (assigning
+  // a fresh array is what makes QML bindings on `*History` re-evaluate).
+  function _push(arr, value) {
+    var next = arr.slice()
+    next.push(value)
+    if (next.length > historyLength) next.shift()
+    return next
+  }
+
   // ---- CPU ----------------------------------------------------------------
-  // Aggregate CPU busy percentage over the last interval, from /proc/stat.
-  property int cpuPercent: 0
+  property alias cpu: cpuSource
+  readonly property int cpuPercent: cpuSource.percent
+  property var cpuHistory: []
 
-  property var _cpuPrevTotal: 0
-  property var _cpuPrevIdle: 0
-
-  function _sampleCpu() {
-    cpuStat.reload()
+  Vitals.CpuSource {
+    id: cpuSource
+    onSampled: sampler.cpuHistory = sampler._push(sampler.cpuHistory, percent)
   }
 
-  function _parseCpu(text) {
-    // First line: "cpu  user nice system idle iowait irq softirq steal ..."
-    var line = String(text || "").split("\n")[0]
-    var parts = line.trim().split(/\s+/)
-    if (parts[0] !== "cpu" || parts.length < 5) return
+  // ---- Memory -------------------------------------------------------------
+  property alias memory: memorySource
+  readonly property int memPercent: memorySource.percent
+  property var memHistory: []
 
-    var idle = parseInt(parts[4]) + (parts.length > 5 ? parseInt(parts[5]) : 0) // idle + iowait
-    var total = 0
-    for (var i = 1; i < parts.length; i++) {
-      var n = parseInt(parts[i])
-      if (isFinite(n)) total += n
-    }
-
-    var dTotal = total - sampler._cpuPrevTotal
-    var dIdle = idle - sampler._cpuPrevIdle
-    if (sampler._cpuPrevTotal > 0 && dTotal > 0) {
-      var busy = Math.round((1 - dIdle / dTotal) * 100)
-      sampler.cpuPercent = Math.max(0, Math.min(100, busy))
-    }
-    sampler._cpuPrevTotal = total
-    sampler._cpuPrevIdle = idle
-  }
-
-  FileView {
-    id: cpuStat
-    path: "/proc/stat"
-    printErrors: false
-    onLoaded: sampler._parseCpu(text())
+  Vitals.MemorySource {
+    id: memorySource
+    onSampled: sampler.memHistory = sampler._push(sampler.memHistory, percent)
   }
 
   // ---- The one timer ------------------------------------------------------
@@ -99,7 +86,8 @@ Singleton {
     running: false
     triggeredOnStart: true
     onTriggered: {
-      if (sampler.subscribed("cpu")) sampler._sampleCpu()
+      if (sampler.subscribed("cpu")) cpuSource.poll()
+      if (sampler.subscribed("memory")) memorySource.poll()
     }
   }
 }
