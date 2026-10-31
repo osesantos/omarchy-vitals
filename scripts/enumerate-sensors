@@ -18,21 +18,28 @@ emit() { # chip label type path
     "$key" "$chip" "$esc_label" "$type" "$path"
 }
 
+# Natural order (temp2 before temp10), skipping a glob that matched nothing.
+inputs() { # dir kind
+  printf '%s\n' "$1"/"$2"*_input | sort -V
+}
+
 for h in /sys/class/hwmon/hwmon*; do
   [ -d "$h" ] || continue
   chip="$(cat "$h/name" 2>/dev/null || echo "hwmon")"
-  for f in "$h"/temp*_input; do
+  while IFS= read -r f; do
     [ -e "$f" ] || continue
     base="${f%_input}"
     label="$(cat "${base}_label" 2>/dev/null || true)"
-    [ -n "$label" ] || label="$chip"
+    # Unlabelled sensors get their own name (temp1) rather than the chip name,
+    # so several of them on one chip stay distinguishable.
+    [ -n "$label" ] || label="$(basename "$base")"
     emit "$chip" "$label" "temp" "$f"
-  done
-  for f in "$h"/fan*_input; do
+  done < <(inputs "$h" temp)
+  while IFS= read -r f; do
     [ -e "$f" ] || continue
     base="${f%_input}"
     label="$(cat "${base}_label" 2>/dev/null || true)"
-    [ -n "$label" ] || label="fan"
+    [ -n "$label" ] || label="$(basename "$base")"
     emit "$chip" "$label" "fan" "$f"
-  done
+  done < <(inputs "$h" fan)
 done

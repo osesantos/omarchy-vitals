@@ -17,6 +17,16 @@ Item {
   property string pluginDir: ""
 
   property var sensors: []
+
+  // Static description of each sensor ({key,chip,label,type,path}), replaced only
+  // when enumeration yields a different set of sensors. It is the model for the
+  // reader Repeater below and for the panel list. `sensors` changes on every
+  // reading, so using it as a model would destroy and rebuild every FileView
+  // while other async reads were still in flight, and a failed read after
+  // suspend/resume would then warn from a destroyed object (quickshell SIGSEGV
+  // in QQmlInfo::~QQmlInfo). Per-sensor values are looked up by index in
+  // `sensors` instead.
+  property var layout: []
   property int maxTemp: 0
   property bool ready: false
 
@@ -54,6 +64,11 @@ Item {
           } catch (e) { /* skip malformed line */ }
         }
         source.sensors = out
+        var next = out.map(function(o) {
+          return { key: o.key, chip: o.chip, label: o.label, type: o.type, path: o.path }
+        })
+        if (JSON.stringify(next) !== JSON.stringify(source.layout))
+          source.layout = next
         source.ready = out.length > 0
         if (source.ready) reader.reloadAll()
       }
@@ -80,7 +95,7 @@ Item {
   // One FileView per resolved path, rebuilt when the sensor list changes.
   Repeater {
     id: reader
-    model: source.sensors
+    model: source.layout
 
     // A root handle the delegates can bind to without reaching for an id from
     // an outer component scope.
